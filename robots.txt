@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://thibsjdhlu.github.io/QUIZZ/sitemap.xml
