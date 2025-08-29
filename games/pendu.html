@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pendu</title>
+    <meta name="description" content="Jeu du Pendu" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 720px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .word { margin: 1rem 0; font-size: clamp(22px, 4vw, 32px); letter-spacing: 6px; font-weight: 800; }
+      .status { opacity: 0.9; }
+      .keys { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 1rem; }
+      .keys button { font: inherit; padding: 0.5rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+      .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>🔤 Pendu</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="9100000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="bar">
+        <div class="badge">Erreurs: <span id="miss">0</span>/7</div>
+        <button id="reset">Nouveau mot</button>
+      </div>
+      <div id="word" class="word" aria-live="polite"></div>
+      <div class="status" id="status">Devinez le mot en cliquant les lettres (ou au clavier).</div>
+      <div class="keys" id="keys"></div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="9100000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const WORDS = 'ordinateur,algorithme,navigateur,serveur,variable,fonction,clavier,écran,binaire,réseau,logiciel,matériel,password,robot,calculatrice,triangle,rectangle,fromage,baguette,citron,soleil,nuage,arc,encre,crayon,tableau,fenêtre,chaise,grenouille'.split(',');
+        const wordEl = document.getElementById('word');
+        const statusEl = document.getElementById('status');
+        const keysEl = document.getElementById('keys');
+        const missEl = document.getElementById('miss');
+        const resetBtn = document.getElementById('reset');
+        let word, guessed, miss;
+
+        function newWord(){
+          word = WORDS[Math.floor(Math.random()*WORDS.length)].toUpperCase();
+          guessed = new Set(); miss = 0; missEl.textContent=miss; render(); renderKeys(); statusEl.textContent='À vous de jouer !';
+        }
+        function render(){ wordEl.textContent = word.split('').map(ch=> (/[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸ]/.test(ch) ? (guessed.has(ch)? ch : '_') : ch)).join(' '); }
+        function renderKeys(){ keysEl.innerHTML=''; const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); letters.forEach(l=>{ const b=document.createElement('button'); b.textContent=l; b.disabled=guessed.has(l); b.addEventListener('click', ()=>guess(l)); keysEl.appendChild(b); }); }
+        function guess(l){ if(guessed.has(l)) return; guessed.add(l); if(word.includes(l)){ render(); if(!wordEl.textContent.includes('_')) statusEl.textContent='Bravo ! Vous avez trouvé.'; } else { miss++; missEl.textContent=miss; if(miss>=7){ statusEl.textContent='Perdu ! Le mot était: '+word; revealAll(); } } renderKeys(); }
+        function revealAll(){ guessed = new Set(word.split('')); render(); }
+
+        window.addEventListener('keydown', (e)=>{ const l=e.key.toUpperCase(); if(l.length===1 && l>='A'&&l<='Z') guess(l); });
+        resetBtn.addEventListener('click', newWord);
+        newWord();
+      })();
+    </script>
+  </body>
+  
+</html>

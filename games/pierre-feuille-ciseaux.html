@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pierre‑Feuille‑Ciseaux</title>
+    <meta name="description" content="Jouez à Pierre‑Feuille‑Ciseaux contre l'ordinateur" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 680px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .score { display: flex; gap: 16px; margin: 0.5rem 0 1rem; opacity: 0.9; }
+      .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+      button.choice { font: inherit; padding: 0.9rem 1rem; border: 1px solid currentColor; border-radius: 12px; background: transparent; cursor: pointer; }
+      .result { margin-top: 1rem; min-height: 3.5rem; }
+      .last { opacity: 0.9; }
+      .controls { margin-top: 0.75rem; display: flex; gap: 12px; }
+      .controls button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+      .badge { display: inline-block; padding: 0.25rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>✊✋✌️ Pierre‑Feuille‑Ciseaux</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="2000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="score">
+        <div>Vous: <span id="hs">0</span></div>
+        <div>Ordinateur: <span id="cs">0</span></div>
+        <div>Manches: <span id="round" class="badge">0/5</span></div>
+      </div>
+      <div class="choices">
+        <button class="choice" data-c="pierre">✊ Pierre</button>
+        <button class="choice" data-c="feuille">✋ Feuille</button>
+        <button class="choice" data-c="ciseaux">✌️ Ciseaux</button>
+      </div>
+      <div class="result">
+        <h2 id="status">Choisissez votre coup</h2>
+        <div class="last" id="last"></div>
+      </div>
+      <div class="controls">
+        <button id="reset">Rejouer</button>
+      </div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="2000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const beats = { pierre: 'ciseaux', ciseaux: 'feuille', feuille: 'pierre' };
+        const names = { pierre: '✊ Pierre', feuille: '✋ Feuille', ciseaux: '✌️ Ciseaux' };
+        let hs=0, cs=0, round=0, active=true;
+        const hsEl = document.getElementById('hs');
+        const csEl = document.getElementById('cs');
+        const rEl = document.getElementById('round');
+        const statusEl = document.getElementById('status');
+        const lastEl = document.getElementById('last');
+
+        function cpu(){ return ['pierre','feuille','ciseaux'][Math.floor(Math.random()*3)]; }
+
+        function endIfNeeded(){
+          if(round >= 5){
+            active = false;
+            if(hs>cs) statusEl.textContent = 'Vous gagnez le match !';
+            else if(cs>hs) statusEl.textContent = 'L\'ordinateur gagne le match.';
+            else statusEl.textContent = 'Match nul.';
+          }
+        }
+
+        function play(h){ if(!active) return; round++; const c = cpu();
+          let msg;
+          if(h===c){ msg='Égalité.'; }
+          else if(beats[h]===c){ hs++; msg='Vous gagnez ce tour !'; }
+          else { cs++; msg='Perdu pour ce tour.'; }
+          hsEl.textContent = hs; csEl.textContent = cs; rEl.textContent = `${round}/5`;
+          statusEl.textContent = msg;
+          lastEl.textContent = `Vous: ${names[h]} • Ordi: ${names[c]}`;
+          endIfNeeded();
+        }
+
+        document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click', ()=>play(b.dataset.c)));
+        document.getElementById('reset').addEventListener('click', ()=>{ hs=cs=round=0; active=true; hsEl.textContent=0; csEl.textContent=0; rEl.textContent='0/5'; statusEl.textContent='Choisissez votre coup'; lastEl.textContent=''; });
+      })();
+    </script>
+  </body>
+  
+</html>

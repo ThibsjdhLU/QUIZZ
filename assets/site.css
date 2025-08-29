@@ -1,0 +1,127 @@
+/* Base UI/UX theme for the mini‑games site */
+:root {
+  --bg: oklch(99% 0 0);
+  --fg: oklch(27% 0 0);
+  --muted: oklch(60% 0.03 0 / 0.7);
+  --primary: oklch(60% 0.12 250);
+  --ring: oklch(70% 0.12 250 / 0.6);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: oklch(14% 0.02 270);
+    --fg: oklch(92% 0.02 270);
+    --muted: oklch(70% 0.02 270 / 0.75);
+    --primary: oklch(70% 0.12 250);
+    --ring: oklch(70% 0.12 250 / 0.45);
+  }
+}
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  color: var(--fg);
+  background: radial-gradient(1200px 1200px at 10% -10%, color-mix(in oklab, var(--primary) 18%, transparent), transparent),
+              radial-gradient(1000px 1000px at 120% 20%, color-mix(in oklab, var(--primary) 14%, transparent), transparent),
+              var(--bg);
+}
+
+a { color: inherit; }
+button, input, select { color: inherit; }
+
+.container { max-width: 1000px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+header.site {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1rem; backdrop-filter: blur(6px);
+  border-bottom: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+  background: color-mix(in oklab, var(--bg) 85%, transparent);
+}
+header.site .left, header.site .right { display: flex; gap: 10px; align-items: center; }
+header.site h1 { margin: 0; font-size: clamp(20px, 4vw, 30px); }
+
+.btn { font: inherit; padding: 0.55rem 0.9rem; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--fg) 35%, transparent); background: color-mix(in oklab, var(--bg) 65%, transparent); cursor: pointer; transition: transform 120ms ease, background-color 120ms, border-color 120ms; }
+.btn:hover { transform: translateY(-1px); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+.btn.ghost { background: transparent; }
+.btn.primary { border-color: color-mix(in oklab, var(--primary) 50%, var(--fg)); background: color-mix(in oklab, var(--primary) 18%, var(--bg)); }
+
+.badge { display: inline-block; padding: 0.35rem 0.6rem; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); }
+
+.grid { display: grid; gap: 16px; }
+.grid.cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+.card { display: block; height: 100%; text-decoration: none; color: inherit; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); border-radius: 14px; padding: 1rem; transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease; background: color-mix(in oklab, var(--bg) 80%, transparent); }
+.card:hover { }
+.card .title { display: flex; align-items: center; gap: 10px; font-weight: 800; margin-bottom: 0.35rem; }
+.card .emoji { font-size: 1.6rem; }
+.card .desc { opacity: 0.9; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* Theme toggle */
+.theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); background: transparent; display: grid; place-items: center; cursor: pointer; }
+.theme-toggle:hover { transform: translateY(-1px); }
+.theme-toggle:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+
+/* Toasts */
+.toast-wrap { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: grid; gap: 8px; z-index: 50; }
+.toast { padding: 0.5rem 0.75rem; border-radius: 10px; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); background: color-mix(in oklab, var(--bg) 80%, transparent); }
+
+/* Small helper animations */
+@keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.pop-in { animation: pop 160ms ease; }
+
+/* Morpion enhancements */
+.ttt-wrap { max-width: 560px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+.ttt-status { min-height: 1.5em; opacity: 0.95; }
+.ttt-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 1rem; }
+.ttt-cell { aspect-ratio: 1/1; font-size: clamp(28px, 8vw, 56px); font-weight: 800; border: 1px dashed color-mix(in oklab, var(--fg) 35%, transparent); border-radius: 14px; display: grid; place-items: center; cursor: pointer; background: color-mix(in oklab, var(--bg) 80%, transparent); transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease, border-color 120ms ease; user-select: none; }
+.ttt-cell:hover { border-style: solid; }
+.ttt-cell[disabled], .ttt-cell.filled { cursor: default; opacity: 0.95; }
+.ttt-cell span { display: inline-block; transform: scale(0.9); }
+.ttt-cell.filled span { transform: scale(1); transition: transform 120ms ease; }
+.ttt-cell.win { background: color-mix(in oklab, var(--primary) 14%, transparent); border-color: color-mix(in oklab, var(--primary) 40%, var(--fg)); }
+.ttt-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 0.6rem; }
+.seg { display: inline-flex; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); border-radius: 10px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 0.4rem 0.7rem; cursor: pointer; }
+.seg input:checked + label { background: color-mix(in oklab, var(--primary) 10%, var(--bg)); }
+.score { display: flex; gap: 10px; opacity: 0.95; margin-top: 0.4rem; }
+
+/* Win line overlay */
+.ttt-board-wrap { position: relative; }
+.ttt-line { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; }
+.ttt-line::after { content: ""; position: absolute; height: 6px; background: color-mix(in oklab, var(--primary) 40%, var(--fg)); border-radius: 999px; transform-origin: left center; }
+
+/* Ads */
+.ad-wrap { margin: 1rem 0; border: 1px dashed color-mix(in oklab, var(--fg) 25%, transparent); border-radius: 12px; padding: 6px; min-height: 90px; display: grid; gap: 4px; align-items: center; justify-items: center; background: color-mix(in oklab, var(--bg) 70%, transparent); }
+.ad-wrap .ad-label { justify-self: end; font-size: 12px; opacity: 0.6; margin-right: 4px; }
+.ad-wrap .adsbygoogle { width: 100%; }
+
+/* CMP banner */
+.cmp-banner { position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; display: grid; place-items: center; padding: 0.75rem; }
+.cmp-banner .inner { max-width: 960px; width: 100%; border: 1px solid color-mix(in oklab, var(--fg) 30%, transparent); border-radius: 14px; background: color-mix(in oklab, var(--bg) 82%, transparent); padding: 0.75rem; backdrop-filter: blur(6px); }
+.cmp-banner p { margin: 0 0 0.5rem; opacity: 0.95; }
+.cmp-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.cmp-actions .btn { padding: 0.45rem 0.75rem; }
+
+/* Clickability safeguards */
+.toast-wrap { pointer-events: none; }
+.toast { pointer-events: auto; }
+.cmp-banner { pointer-events: none; }
+.cmp-banner .inner { pointer-events: auto; }
+.card { cursor: pointer; position: relative; z-index: 0; }
+
+/* Limit hover effects to mouse/trackpad (avoid double‑tap on iOS Safari) */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { transform: translateY(-3px); border-color: color-mix(in oklab, var(--primary) 35%, var(--fg)); background: color-mix(in oklab, var(--primary) 6%, var(--bg)); }
+  .ttt-cell:hover { transform: translateY(-2px); }
+}
+
+/* Better taps on iOS */
+a.card { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Démineur</title>
+    <meta name="description" content="Démineur 10x10" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 520px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .bar { display: flex; gap: 12px; margin: 0.6rem 0 1rem; align-items: center; flex-wrap: wrap; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+      .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+      .cell { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 8px; cursor: pointer; user-select: none; background: color-mix(in oklab, currentColor 6%, transparent); font-weight: 700; }
+      .cell.revealed { background: color-mix(in oklab, currentColor 12%, transparent); cursor: default; }
+      .cell.flag::after { content: '🚩'; }
+      .controls { margin-top: 0.75rem; display: flex; gap: 12px; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>💣 Démineur</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="7000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="bar">
+        <div class="badge">Mines: <span id="mines">15</span></div>
+        <div class="badge">Flags: <span id="flags">0</span></div>
+        <div class="badge">État: <span id="status">En cours</span></div>
+      </div>
+      <div id="grid" class="grid" aria-label="Grille du démineur"></div>
+      <div class="controls"><button id="reset">Rejouer</button></div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="7000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const W=10,H=10,MINES=15;
+        const gridEl = document.getElementById('grid');
+        const minesEl = document.getElementById('mines');
+        const flagsEl = document.getElementById('flags');
+        const statusEl = document.getElementById('status');
+        const resetBtn = document.getElementById('reset');
+        let grid, revealed, flags, alive, firstClick;
+
+        minesEl.textContent = MINES;
+
+        function idx(x,y){ return y*W+x; }
+        function neighbors(x,y){ const n=[]; for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ if(dx||dy){ const nx=x+dx, ny=y+dy; if(nx>=0&&nx<W&&ny>=0&&ny<H) n.push([nx,ny]); } } return n; }
+
+        function placeMines(sx,sy){
+          let m=0; while(m<MINES){ const x=Math.floor(Math.random()*W), y=Math.floor(Math.random()*H); if((x===sx&&y===sy)||grid[idx(x,y)]===-1) continue; grid[idx(x,y)]=-1; m++; }
+          for(let y=0;y<H;y++) for(let x=0;x<W;x++){ if(grid[idx(x,y)]===-1) continue; grid[idx(x,y)]=neighbors(x,y).reduce((a,[nx,ny])=>a+(grid[idx(nx,ny)]===-1),0); }
+        }
+
+        function render(){
+          gridEl.innerHTML='';
+          for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+            const b=document.createElement('button'); b.className='cell'; b.dataset.x=x; b.dataset.y=y; b.oncontextmenu=(e)=>{ e.preventDefault(); flag(b); };
+            b.addEventListener('click', ()=>reveal(b));
+            gridEl.appendChild(b);
+          }
+          update();
+        }
+
+        function update(){ flagsEl.textContent = flags; statusEl.textContent = alive? 'En cours' : 'Terminé'; }
+
+        function flood(x,y){
+          const q=[[x,y]]; const seen=new Set();
+          while(q.length){ const [cx,cy]=q.shift(); const id=idx(cx,cy); if(seen.has(id)) continue; seen.add(id); if(revealed[id]) continue; revealed[id]=true; const btn=buttonAt(cx,cy); btn.classList.add('revealed'); btn.textContent = grid[id]>0? grid[id] : '';
+            if(grid[id]===0) neighbors(cx,cy).forEach(([nx,ny])=>q.push([nx,ny]));
+          }
+        }
+
+        function buttonAt(x,y){ return gridEl.children[idx(x,y)]; }
+
+        function reveal(b){ if(!alive) return; const x=+b.dataset.x, y=+b.dataset.y; const id=idx(x,y);
+          if(firstClick){ placeMines(x,y); firstClick=false; }
+          if(revealed[id] || b.classList.contains('flag')) return;
+          if(grid[id]===-1){ b.classList.add('revealed'); b.textContent='💥'; alive=false; update(); showAllMines(); return; }
+          if(grid[id]===0){ flood(x,y); } else { revealed[id]=true; b.classList.add('revealed'); b.textContent = grid[id]; }
+          checkWin();
+        }
+
+        function showAllMines(){ for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const id=idx(x,y); if(grid[id]===-1){ const btn=buttonAt(x,y); btn.classList.add('revealed'); if(!btn.classList.contains('flag')) btn.textContent='💣'; } } }
+
+        function flag(b){ if(!alive) return; const x=+b.dataset.x, y=+b.dataset.y; const id=idx(x,y); if(revealed[id]) return; if(b.classList.toggle('flag')) flags++; else flags--; update(); }
+
+        function checkWin(){
+          let ok=true; for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const id=idx(x,y); if(grid[id]!==-1 && !revealed[id]) ok=false; }
+          if(ok){ alive=false; statusEl.textContent='Gagné !'; }
+        }
+
+        function init(){ grid = Array(W*H).fill(0); revealed = Array(W*H).fill(false); flags=0; alive=true; firstClick=true; render(); }
+        document.getElementById('reset').addEventListener('click', init);
+        init();
+      })();
+    </script>
+  </body>
+  
+</html>

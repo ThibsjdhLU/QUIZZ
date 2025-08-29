@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2048</title>
+    <meta name="description" content="Jeu 2048 en 4x4" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 480px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .bar { display: flex; gap: 12px; margin: 0.6rem 0 1rem; align-items: center; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+      .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: color-mix(in oklab, currentColor 8%, transparent); padding: 10px; border-radius: 12px; }
+      .cell { position: relative; aspect-ratio: 1/1; display: grid; place-items: center; font-weight: 700; border-radius: 8px; background: color-mix(in oklab, currentColor 6%, transparent); font-size: clamp(18px, 5vw, 28px); }
+      .tile { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 8px; transition: transform 90ms ease, background-color 120ms ease; }
+      .tile span { font-weight: 800; }
+      .controls { margin-top: 0.75rem; display: flex; gap: 12px; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>2048</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="6000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="bar">
+        <div class="badge">Score: <span id="score">0</span></div>
+        <div class="badge">Record: <span id="best">0</span></div>
+      </div>
+      <div class="board" id="board" aria-label="Grille 2048"></div>
+      <div class="controls"><button id="reset">Rejouer</button></div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="6000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const N=4;
+        const boardEl = document.getElementById('board');
+        const scoreEl = document.getElementById('score');
+        const bestEl = document.getElementById('best');
+        const resetBtn = document.getElementById('reset');
+        const storage = window.SafeStorage || window.localStorage;
+        let grid, score=0, best=(function(){ try { return +storage.getItem('2048_best') || 0; } catch(e){ return 0; } })(), moved=false;
+        bestEl.textContent = best;
+
+        function init(){
+          grid = Array.from({length:N}, ()=>Array(N).fill(0));
+          score=0; scoreEl.textContent=0;
+          boardEl.innerHTML='';
+          for(let i=0;i<N*N;i++){ const d=document.createElement('div'); d.className='cell'; boardEl.appendChild(d); }
+          addRandom(); addRandom();
+          render();
+        }
+
+        function addRandom(){
+          const empty=[]; for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(!grid[r][c]) empty.push([r,c]);
+          if(!empty.length) return;
+          const [r,c] = empty[Math.floor(Math.random()*empty.length)];
+          grid[r][c] = Math.random()<0.9?2:4;
+        }
+
+        function render(){
+          const cells = boardEl.children; let i=0;
+          for(let r=0;r<N;r++) for(let c=0;c<N;c++,i++){
+            const cell = cells[i]; cell.innerHTML='';
+            const v = grid[r][c];
+            if(v){
+              const t = document.createElement('div'); t.className='tile'; t.style.backgroundColor = color(v); t.innerHTML=`<span>${v}</span>`; cell.appendChild(t);
+            }
+          }
+        }
+
+        function color(v){
+          const map = {2:'#eee4da',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};
+          const d = map[v]||'#ccc0b3';
+          return d;
+        }
+
+        function compress(line){
+          const a = line.filter(x=>x); while(a.length<N) a.push(0); return a;
+        }
+        function merge(line){
+          for(let i=0;i<N-1;i++) if(line[i] && line[i]===line[i+1]){ line[i]*=2; score+=line[i]; line[i+1]=0; i++; }
+          return line;
+        }
+
+        function moveLeft(){ moved=false; for(let r=0;r<N;r++){ let row = compress(grid[r]); const before=row.join(); row = merge(row); row = compress(row); grid[r]=row; if(row.join()!==before) moved=true; } }
+        function moveRight(){ moved=false; for(let r=0;r<N;r++){ let row = [...grid[r]].reverse(); const before=row.join(); row = compress(row); row = merge(row); row = compress(row); row.reverse(); if(row.join()!==grid[r].join()) moved=true; grid[r]=row; } }
+        function moveUp(){ moved=false; for(let c=0;c<N;c++){ let col=[]; for(let r=0;r<N;r++) col.push(grid[r][c]); const before=col.join(); col = compress(col); col = merge(col); col = compress(col); for(let r=0;r<N;r++) { grid[r][c]=col[r]; } if(col.join()!==before) moved=true; } }
+        function moveDown(){ moved=false; for(let c=0;c<N;c++){ let col=[]; for(let r=0;r<N;r++) col.push(grid[r][c]); col.reverse(); const before=col.join(); col = compress(col); col = merge(col); col = compress(col); col.reverse(); for(let r=0;r<N;r++) grid[r][c]=col[r]; if(col.join()!==[...Array.from({length:N},(_,i)=>grid[i][c])].join()) moved=true; } }
+
+        function canMove(){
+          for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(!grid[r][c]) return true;
+          for(let r=0;r<N;r++) for(let c=0;c<N-1;c++) if(grid[r][c]===grid[r][c+1]) return true;
+          for(let c=0;c<N;c++) for(let r=0;r<N-1;r++) if(grid[r][c]===grid[r+1][c]) return true;
+          return false;
+        }
+
+        function onMove(dir){
+          const before = JSON.stringify(grid);
+          if(dir==='left') moveLeft();
+          else if(dir==='right') moveRight();
+          else if(dir==='up') moveUp();
+          else if(dir==='down') moveDown();
+          if(JSON.stringify(grid)!==before){ addRandom(); }
+          scoreEl.textContent = score; if(score>best){ best=score; bestEl.textContent=best; try { storage.setItem('2048_best', String(best)); } catch(e){} }
+          render();
+          if(!canMove()) alert('Partie terminée ! Score: '+score);
+        }
+
+        window.addEventListener('keydown', (e)=>{
+          if(['ArrowLeft','a','A','q','Q'].includes(e.key)) onMove('left');
+          else if(['ArrowRight','d','D'].includes(e.key)) onMove('right');
+          else if(['ArrowUp','w','W','z','Z'].includes(e.key)) onMove('up');
+          else if(['ArrowDown','s','S'].includes(e.key)) onMove('down');
+        });
+
+        let touchStart;
+        boardEl.addEventListener('touchstart', e=>{ touchStart = e.touches[0]; });
+        boardEl.addEventListener('touchend', e=>{
+          if(!touchStart) return; const t=e.changedTouches[0]; const dx=t.clientX-touchStart.clientX; const dy=t.clientY-touchStart.clientY; if(Math.abs(dx)>Math.abs(dy)){ if(dx>15) onMove('right'); else if(dx<-15) onMove('left'); } else { if(dy>15) onMove('down'); else if(dy<-15) onMove('up'); } touchStart=null; });
+
+        resetBtn.addEventListener('click', init);
+        init();
+      })();
+    </script>
+  </body>
+  
+</html>

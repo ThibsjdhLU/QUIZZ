@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test de Réaction</title>
+    <meta name="description" content="Mesurez votre temps de réaction" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 720px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .panel { margin-top: 1rem; border: 1px solid currentColor; border-radius: 16px; padding: 0; overflow: hidden; }
+      .screen { padding: 4rem 1rem; text-align: center; font-size: clamp(18px, 3vw, 24px); cursor: pointer; }
+      .wait { background: color-mix(in oklab, currentColor 8%, transparent); }
+      .go { background: color-mix(in oklab, lime 25%, transparent); }
+      .too-soon { background: color-mix(in oklab, red 25%, transparent); }
+      .stats { margin-top: 1rem; display: flex; gap: 16px; flex-wrap: wrap; opacity: 0.95; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+      .controls { margin-top: 0.75rem; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>⚡️ Test de Réaction</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="3000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="panel">
+        <div id="screen" class="screen wait" role="button" aria-live="polite" tabindex="0">
+          Cliquez dès que l'écran devient VERT
+        </div>
+      </div>
+      <div class="stats">
+        <div class="badge">Dernier: <span id="last">–</span> ms</div>
+        <div class="badge">Meilleur: <span id="best">–</span> ms</div>
+        <div class="badge">Essais: <span id="tries">0</span></div>
+      </div>
+      <div class="controls">
+        <button id="reset">Réinitialiser</button>
+      </div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="3000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const screen = document.getElementById('screen');
+        const lastEl = document.getElementById('last');
+        const bestEl = document.getElementById('best');
+        const triesEl = document.getElementById('tries');
+        const resetBtn = document.getElementById('reset');
+        let timer, startTime, best = null, tries = 0, ready = false;
+
+        function setWait(){
+          screen.className = 'screen wait';
+          screen.textContent = "Cliquez dès que l'écran devient VERT";
+          ready = false;
+          const delay = 1000 + Math.random()*2000;
+          timer = setTimeout(()=>{ startTime = performance.now(); ready = true; screen.className = 'screen go'; screen.textContent = 'Cliquez !'; }, delay);
+        }
+
+        function tooSoon(){
+          clearTimeout(timer);
+          screen.className = 'screen too-soon';
+          screen.textContent = 'Trop tôt ! Cliquez pour réessayer';
+          ready = false; startTime = undefined;
+        }
+
+        function clicked(){
+          if(ready && startTime){
+            const t = Math.round(performance.now() - startTime);
+            tries++; triesEl.textContent = tries; lastEl.textContent = t;
+            if(best===null || t < best){ best = t; bestEl.textContent = best; }
+            screen.className = 'screen wait';
+            screen.textContent = 'Encore ? Cliquez pour relancer';
+            ready = false; startTime = undefined; clearTimeout(timer);
+          } else {
+            if(!ready) tooSoon();
+          }
+        }
+
+        screen.addEventListener('click', ()=>{ if(ready) clicked(); else setWait(); });
+        screen.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); if(ready) clicked(); else setWait(); }});
+        resetBtn.addEventListener('click', ()=>{ best=null; lastEl.textContent='–'; bestEl.textContent='–'; tries=0; triesEl.textContent='0'; screen.className='screen wait'; screen.textContent="Cliquez dès que l'écran devient VERT"; clearTimeout(timer); ready=false; startTime=undefined; });
+      })();
+    </script>
+  </body>
+  
+</html>

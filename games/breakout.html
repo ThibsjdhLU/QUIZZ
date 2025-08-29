@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Breakout</title>
+    <meta name="description" content="Casse-briques simple" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 720px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      canvas { border: 1px solid currentColor; border-radius: 12px; background: color-mix(in oklab, currentColor 6%, transparent); display: block; margin-top: 1rem; }
+      .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>🧱 Breakout</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="9000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="bar">
+        <div class="badge">Score: <span id="score">0</span></div>
+        <button id="start">Démarrer</button>
+      </div>
+      <canvas id="cv" width="640" height="420" aria-label="Jeu Breakout"></canvas>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="9000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const startBtn = document.getElementById('start');
+        let paddle, ball, bricks, score, playing=false;
+
+        function reset(){
+          paddle = { x: cv.width/2-50, y: cv.height-20, w: 100, h: 10, speed: 7 };
+          ball = { x: cv.width/2, y: cv.height-40, r: 7, vx: 4, vy: -4 };
+          bricks = [];
+          const rows=5, cols=10, bw=56, bh=18, gap=6, offsetX= (cv.width - (cols*bw + (cols-1)*gap))/2, offsetY=40;
+          for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) bricks.push({ x: offsetX + c*(bw+gap), y: offsetY + r*(bh+gap), w: bw, h: bh, hit:false });
+          score=0; scoreEl.textContent=0; playing=true; loop();
+        }
+
+        function draw(){
+          ctx.clearRect(0,0,cv.width,cv.height);
+          // paddle
+          ctx.fillStyle='currentColor'; ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+          // ball
+          ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+          // bricks
+          bricks.forEach(b=>{ if(!b.hit){ ctx.fillStyle='currentColor'; ctx.globalAlpha=0.85; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.globalAlpha=1; }});
+        }
+
+        function step(){
+          // move paddle (mouse)
+          // handled by event
+          // move ball
+          ball.x += ball.vx; ball.y += ball.vy;
+          // walls
+          if(ball.x<ball.r || ball.x>cv.width-ball.r) ball.vx*=-1;
+          if(ball.y<ball.r) ball.vy*=-1;
+          if(ball.y>cv.height+20){ playing=false; }
+          // paddle collision
+          if(ball.y+ball.r>=paddle.y && ball.x>=paddle.x && ball.x<=paddle.x+paddle.w && ball.vy>0){
+            const hitPos = (ball.x - (paddle.x+paddle.w/2))/(paddle.w/2); // -1..1
+            ball.vx = hitPos * 5; ball.vy *= -1; ball.y = paddle.y - ball.r - 1;
+          }
+          // bricks
+          bricks.forEach(b=>{
+            if(!b.hit && ball.x>b.x && ball.x<b.x+b.w && ball.y> b.y && ball.y< b.y+b.h){
+              b.hit=true; score++; scoreEl.textContent=score; ball.vy*=-1;
+            }
+          });
+          // win
+          if(bricks.every(b=>b.hit)) playing=false;
+        }
+
+        function loop(){ if(!playing){ draw(); return; } step(); draw(); requestAnimationFrame(loop); }
+
+        cv.addEventListener('mousemove', (e)=>{ const rect=cv.getBoundingClientRect(); const x=e.clientX-rect.left; paddle.x = Math.max(0, Math.min(cv.width-paddle.w, x - paddle.w/2)); });
+        window.addEventListener('keydown', (e)=>{ if(e.key==='ArrowLeft') paddle.x=Math.max(0,paddle.x-paddle.speed); else if(e.key==='ArrowRight') paddle.x=Math.min(cv.width-paddle.w,paddle.x+paddle.speed); });
+        startBtn.addEventListener('click', reset);
+        reset();
+      })();
+    </script>
+  </body>
+  
+</html>

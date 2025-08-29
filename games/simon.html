@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simon</title>
+    <meta name="description" content="Jeu de mémoire Simon" />
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="../assets/site.css">
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid currentColor; }
+      header a { text-decoration: none; color: inherit; }
+      main { max-width: 680px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+      h1 { margin: 0; font-size: clamp(22px, 4vw, 32px); }
+      .padwrap { display: grid; grid-template-columns: repeat(2, 150px); grid-template-rows: repeat(2, 150px); gap: 12px; justify-content: center; margin-top: 1rem; }
+      .pad { border-radius: 16px; cursor: pointer; opacity: 0.9; transition: transform 90ms; display: grid; place-items: center; color: #000; font-weight: 800; }
+      .pad:active { transform: translateY(-2px); }
+      .p0 { background: #4ade80; } /* vert */
+      .p1 { background: #60a5fa; } /* bleu */
+      .p2 { background: #f87171; } /* rouge */
+      .p3 { background: #fbbf24; } /* jaune */
+      .lit { filter: brightness(1.25); }
+      .bar { display: flex; gap: 12px; margin-top: 0.75rem; align-items: center; flex-wrap: wrap; }
+      .badge { padding: 0.35rem 0.6rem; border: 1px solid currentColor; border-radius: 999px; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border: 1px solid currentColor; background: transparent; border-radius: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="left"><a class="btn ghost" href="../index.html">← Accueil</a></div>
+      <h1>🎵 Simon</h1>
+      <div class="right"><button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button></div>
+    </header>
+    <main class="container">
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="8000000001" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+      <div class="bar">
+        <div class="badge">Niveau: <span id="level">0</span></div>
+        <div class="badge">Meilleur: <span id="best">0</span></div>
+        <button id="start">Démarrer</button>
+      </div>
+      <div class="padwrap">
+        <div class="pad p0" data-i="0" aria-label="vert"></div>
+        <div class="pad p1" data-i="1" aria-label="bleu"></div>
+        <div class="pad p2" data-i="2" aria-label="rouge"></div>
+        <div class="pad p3" data-i="3" aria-label="jaune"></div>
+      </div>
+      <div class="ad-wrap" aria-label="Publicité">
+        <small class="ad-label">Publicité</small>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="8000000002" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </div>
+    </main>
+    <script defer src="../assets/config.js"></script>
+    <script defer src="../assets/site.js"></script>
+    <script>
+      (function(){
+        const pads = Array.from(document.querySelectorAll('.pad'));
+        const startBtn = document.getElementById('start');
+        const levelEl = document.getElementById('level');
+        const bestEl = document.getElementById('best');
+        const storage = window.SafeStorage || window.localStorage;
+        let seq=[], pos=0, playing=false, best=(function(){ try { return +storage.getItem('simon_best') || 0; } catch(e){ return 0; } })();
+        bestEl.textContent = best;
+
+        function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+        function rand(){ return Math.floor(Math.random()*4); }
+        function light(i){ const p=pads[i]; p.classList.add('lit'); setTimeout(()=>p.classList.remove('lit'), 300); }
+        async function playSeq(){ playing=true; for(const i of seq){ light(i); await sleep(420); } playing=false; }
+        function addStep(){ seq.push(rand()); levelEl.textContent = seq.length; }
+        function reset(){ seq=[]; pos=0; levelEl.textContent=0; }
+        async function start(){ reset(); addStep(); await playSeq(); }
+
+        pads.forEach(p=>p.addEventListener('click', async ()=>{
+          if(playing || seq.length===0) return; const i=+p.dataset.i; light(i);
+          if(i===seq[pos]){ pos++; if(pos===seq.length){ if(seq.length>best){ best=seq.length; bestEl.textContent=best; try { storage.setItem('simon_best', String(best)); } catch(e){} } pos=0; addStep(); await sleep(350); await playSeq(); } }
+          else { alert('Faux ! Niveau atteint: '+seq.length); reset(); }
+        }));
+
+        startBtn.addEventListener('click', start);
+      })();
+    </script>
+  </body>
+  
+</html>
