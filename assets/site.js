@@ -99,14 +99,16 @@
   function hasConsent(){ try { return (window.SafeStorage || localStorage).getItem(CONSENT_KEY) === 'granted'; } catch(e){ return false; } }
   function denied(){ try { return (window.SafeStorage || localStorage).getItem(CONSENT_KEY) === 'denied'; } catch(e){ return false; } }
 
-  function injectScript(){
-    if(document.querySelector('script[data-adsense]')) return;
+  function ensureScriptAndInit(){
+    var existing = document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]');
+    if(existing){ initSlots(); return; }
+    if(document.querySelector('script[data-adsense]')){ initSlots(); return; }
     const s = document.createElement('script');
     s.async = true; s.setAttribute('data-adsense','');
     s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS_CLIENT}`;
     s.crossOrigin = 'anonymous';
     document.head.appendChild(s);
-    s.addEventListener('load', () => initSlots());
+    s.addEventListener('load', function(){ initSlots(); });
   }
 
   function initSlots(){
@@ -131,11 +133,11 @@
         </div>
       </div>`;
     document.body.appendChild(wrap);
-    wrap.querySelector('#cmp-accept').addEventListener('click', function(){ try {(window.SafeStorage||localStorage).setItem(CONSENT_KEY,'granted');}catch(e){} wrap.remove(); injectScript(); if(window.SiteUI && window.SiteUI.toast) window.SiteUI.toast('Publicités activées'); });
+    wrap.querySelector('#cmp-accept').addEventListener('click', function(){ try {(window.SafeStorage||localStorage).setItem(CONSENT_KEY,'granted');}catch(e){} wrap.remove(); ensureScriptAndInit(); if(window.SiteUI && window.SiteUI.toast) window.SiteUI.toast('Publicités activées'); });
     wrap.querySelector('#cmp-decline').addEventListener('click', function(){ try {(window.SafeStorage||localStorage).setItem(CONSENT_KEY,'denied');}catch(e){} wrap.remove(); if(window.SiteUI && window.SiteUI.toast) window.SiteUI.toast('Publicités désactivées'); });
   }
 
-  function setup(){ if(hasConsent()) injectScript(); showBanner(); }
+  function setup(){ if(hasConsent()) ensureScriptAndInit(); showBanner(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', setup); else setup();
 
   // Expose controls
